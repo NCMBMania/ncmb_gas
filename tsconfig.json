@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "es2015",
+    "module": "commonjs",
+    "sourceMap": false,
+    "declaration": true,
+    "outDir": "./",
+    "strict": true,
+    "types": ["mocha", "node"],
+    "lib": ["esnext"],
+    "experimentalDecorators": true
+  }
+}

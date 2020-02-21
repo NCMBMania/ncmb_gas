@@ -1,0 +1,4 @@
+**/**
+!appsscript.json
+!index.ts
+!libs/*.ts
