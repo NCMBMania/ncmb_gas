@@ -1,7 +1,10 @@
 import { Config } from './libs/config';
-import { NCMBObject } from './libs/object';
+import { NCMBObject, NCMBInstallation, NCMBPush } from './libs/object';
 import { NCMBQuery } from './libs/query';
 import { NCMBRequest } from './libs/request';
+import { NCMBAcl } from './libs/acl';
+import { NCMBUser } from './libs/user';
+import { NCMBScript } from './libs/script';
 
 class NCMB {
   applicationKey: string;
@@ -13,7 +16,10 @@ class NCMB {
   signatureMethod: string;
   signatureVersion: number;
   sessionToken: string;
-  
+  User: NCMBUser;
+  Installation: NCMBInstallation;
+  Push: NCMBPush;
+
   constructor(applicationKey: string, clientKey: string, config: Config = new Config()) {
     this.applicationKey = applicationKey;
     this.clientKey = clientKey;
@@ -24,25 +30,51 @@ class NCMB {
     this.signatureMethod = config.signatureMethod;
     this.signatureVersion = config.signatureVersion;
     this.sessionToken = '';
+    this.User = NCMBUser;
+    this.User.ncmb = this;
+    this.Installation = NCMBInstallation;
+    this.Installation.ncmb = this;
+    this.Push = NCMBPush;
+    this.Push.ncmb = this;
   }
   
-  Object(name: string) {
+  Object(name: string): NCMBObject {
     return new NCMBObject(this, name);
   }
   
-  Request() {
+  Request(): NCMBRequest {
     return new NCMBRequest(this);
   }
+  
+  Query(name: string): NCMBQuery {
+    return new NCMBQuery(this, name);
+  }
+  
+  Acl(): NCMBAcl {
+    return new NCMBAcl;
+  }
+  
+  Script(): NCMBScript {
+    return new NCMBScript(this);
+  }
+
 }
 
-export { NCMB };
+const init = (applicationKey: string, clientKey: string, config: Config = new Config()) => {
+  return new NCMB(applicationKey, clientKey, config);
+}
 
-function test() {
+export { NCMB, init };
+
+function _test() {
     const ncmb = new NCMB('53ee32f8cc60c24703fecd6e121cabb710c71c46f288b5864a64845c558d1fff', '3bafaebfa7a4fa9470ed7edf0a7e3811228f61e5ae930929cd49dce421311bbf');
     const className = 'Test';
     const obj = ncmb.Object('Test');
     const fields = {a: 'b', c: 'd'};
     obj.sets(fields);
     obj.save();
-    Logger.log(obj.get('objectId'))
+    Logger.log(obj.get('objectId'));
+    obj.set('memo', new Date());
+    obj.save();
+    Logger.log(obj.get('updateDate'));
 }

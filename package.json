@@ -11,6 +11,7 @@
   "author": "Atsushi Nakatsugawa",
   "license": "MIT",
   "dependencies": {
+    "@google/clasp": "^2.3.0",
     "@types/google-apps-script": "^1.0.10"
   },
   "devDependencies": {
