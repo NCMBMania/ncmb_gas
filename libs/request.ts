@@ -5,10 +5,13 @@ class NCMBRequest {
   constructor(ncmb: NCMB) {
     this.ncmb = ncmb;
   }
-  exec(method: string, path: string, fields: {[s: string]: any} = {}, query: {[s: string]: string} = {}, options: object = {}) {
+  exec(method: string, path: string, fields: {[s: string]: any} = {}, query: {[s: string]: string} = {}, options: object = {}): object {
     const timestamp = new Date().toISOString();
     let url = `${this.ncmb.protocol}//${options.fqdn || this.ncmb.fqdn}${path}`;
+
+    const file = options.file;
     const sig = this.createSignature(url, path, method, query, timestamp, options);
+
     if (Object.keys(query).length > 0) {
       const queries = Object.keys(query).sort().map(key => {
         let q = query[key];
@@ -19,7 +22,7 @@ class NCMBRequest {
       })
       url = `${url}?${queries.join('&')}`;
     }
-    console.log(url);
+
     const headers: {[s: string]: string} = {
       'X-NCMB-Application-Key': this.ncmb.applicationKey,
       'X-NCMB-Signature': sig,
@@ -32,12 +35,22 @@ class NCMBRequest {
     const params: {[s: string]: any} = {
       headers: headers,
       method: method,
-      contentType: "application/json"
     }
-    if (['GET', 'DELETE'].indexOf(method) === -1) {
-      params.payload = JSON.stringify(fields);
+    if(!file) {
+      params.contentType = 'application/json';
+      if (['GET', 'DELETE'].indexOf(method) === -1) {
+        params.payload = JSON.stringify(fields);
+      }
+    } else {
+      params.payload = {
+        file: file.fileData
+      };
+      if (file.acl) params.payload.acl = file.acl.toJSON();
     }
     const response = UrlFetchApp.fetch(url, params);
+    if (path.indexOf(`${this.ncmb.version}/files/`) > -1 && method === 'GET') {
+      return response.getBlob();
+    }
     const contents = response.getContentText('UTF-8');
     if (method === 'DELETE' && contents == '') {
       return {};

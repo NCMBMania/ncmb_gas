@@ -1,12 +1,10 @@
-import { NCMB } from '../index';
 import { NCMBObject } from './object';
 
 class NCMBUser extends NCMBObject {
-  static ncmb: NCMB;
-
   constructor(ncmb) {
     super(ncmb, 'users');
   }
+  
   // ログイン処理
   static login(userName: string, password: string) {
     const req = this.ncmb.Request();

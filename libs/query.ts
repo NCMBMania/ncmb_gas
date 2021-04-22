@@ -5,20 +5,20 @@ import { NCMBGeoPoint } from './geopoint';
 class NCMBQuery {
   className: string;
   ncmb: NCMB;
-  where: {[s: string]: any};
+  _where: {[s: string]: any};
   _limit: number;
-  order: string;
+  _order: string;
   _include: string;
-  skip: number;
+  _skip: number;
   
   constructor(ncmb: NCMB, name: string) {
     this.ncmb = ncmb;
     this.className = name;
-    this.where = {};
-    this._limit = 10;
-    this.order = 'createDate';
+    this._where = {};
+    this._limit = 100;
+    this._order = null;
     this._include = '';
-    this.skip = 0;
+    this._skip = 0;
   }
 
   limit(num: number): NCMBQuery {
@@ -30,7 +30,7 @@ class NCMBQuery {
     this._include = str;
     return this;
   }
-
+       
   equalTo(key: string, value: any): NCMBQuery {
     return this.setOperand(key, value);
   }
@@ -87,21 +87,21 @@ class NCMBQuery {
     return this.setOperand(key, value, '$nearSphere');
   }
   
-  withinKilometers(key: string, value: NCMBGeoPoint, distance: number): NCMBQuery {
+  withinKilometers(key: string, value: any, distance: number): NCMBQuery {
     this.setOperand(key, value, '$nearSphere');
-    this.where[key]['$maxDistanceInKilometers'] = distance;
+    this._where[key]['$maxDistanceInKilometers'] = distance;
     return this;
   }
   
-  withinMiles(key: string, value: NCMBGeoPoint, distance: number): NCMBQuery {
+  withinMiles(key: string, value: any, distance: number): NCMBQuery {
     this.setOperand(key, value, '$nearSphere');
-    this.where[key]['$maxDistanceInMiles'] = distance;
+    this._where[key]['$maxDistanceInMiles'] = distance;
     return this;
   }
   
   withinRadians(key: string, value: NCMBGeoPoint, distance: number): NCMBQuery {
     this.setOperand(key, value, '$nearSphere');
-    this.where[key]['$maxDistanceInRadians'] = distance;
+    this._where[key]['$maxDistanceInRadians'] = distance;
     return this;
   }
   
@@ -111,10 +111,10 @@ class NCMBQuery {
 
   setOperand(key: string, value: any, ope:string = ''): NCMBQuery {
     if (ope === '') {
-      this.where[key] = this.changeValue(value);
+      this._where[key] = this.changeValue(value);
     } else {
-      if (!this.where[key]) this.where[key] = {};
-      this.where[key][ope] = this.changeValue(value);
+      if (!this._where[key]) this._where[key] = {};
+      this._where[key][ope] = this.changeValue(value);
     }
     return this;
   }
@@ -135,11 +135,11 @@ class NCMBQuery {
   fetchAll(): NCMBObject[] | NCMBInstallation[] {
     const req = this.ncmb.Request();
     const query = {
-      where: this.where,
+      where: this._where,
       limit: this._limit,
-      order: this.order,
+      order: this._order,
       include: this._include,
-      skip: this.skip
+      skip: this._skip
     };
     interface Results {
       results: object[];
@@ -197,7 +197,6 @@ function _query_test() {
 function _query_geo_test() {
   const applicationKey = '70dfced7542e494861ec39ba7442115dfa9806312a444831ed9a7faac5087934';
   const clientKey = '4d0dea61349c1ae47106a06c80f11dfffe705e606709fa9563ac5cf80cf2edff';
-
   const ncmb = new NCMB(applicationKey, clientKey);
   const query = ncmb.Query('Test');
   const ary = query

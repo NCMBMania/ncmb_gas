@@ -1,11 +1,11 @@
 import { Config } from './libs/config';
-import { NCMBObject, NCMBInstallation, NCMBPush } from './libs/object';
-import { NCMBGeoPoint } from './libs/geopoint';
+import { NCMBObject, NCMBInstallation, NCMBPush, NCMBFile } from './libs/object';
 import { NCMBQuery } from './libs/query';
 import { NCMBRequest } from './libs/request';
 import { NCMBAcl } from './libs/acl';
 import { NCMBUser } from './libs/user';
 import { NCMBScript } from './libs/script';
+import { NCMBGeoPoint } from './libs/geopoint';
 
 class NCMB {
   applicationKey: string;
@@ -20,9 +20,9 @@ class NCMB {
   User: typeof NCMBUser;
   Installation: typeof NCMBInstallation;
   Push: typeof NCMBPush;
+  File: typeof NCMBFile;
 
-  constructor(applicationKey: string, clientKey: string, config?: Config) {
-    if (!config) config = new Config();
+  constructor(applicationKey: string, clientKey: string, config: Config = new Config()) {
     this.applicationKey = applicationKey;
     this.clientKey = clientKey;
     this.version = config.version;
@@ -38,6 +38,8 @@ class NCMB {
     this.Installation.ncmb = this;
     this.Push = NCMBPush;
     this.Push.ncmb = this;
+    this.File = NCMBFile;
+    this.File.ncmb = this;
   }
   
   Object(name: string): NCMBObject {
@@ -60,12 +62,12 @@ class NCMB {
     return new NCMBScript(this);
   }
 
-  GeoPoint(lat: number, lng: number): NCMBGeoPoint {
-    return new NCMBGeoPoint(lat, lng);
+  GeoPoint(latitude:number, longitude:number): NCMBGeoPoint {
+    return new NCMBGeoPoint(latitude, longitude);
   }
 }
 
-var init = (applicationKey: string, clientKey: string, config: Config = new Config()) => {
+function init(applicationKey: string, clientKey: string, config: Config = new Config()) {
   return new NCMB(applicationKey, clientKey, config);
 }
 

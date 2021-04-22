@@ -12,7 +12,7 @@ class NCMBGeoPoint {
       __type: 'GeoPoint',
       latitude: this.latitude,
       longitude: this.longitude
-    };
+    }
   }
 }
 
