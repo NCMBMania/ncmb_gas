@@ -1,5 +1,6 @@
 import { Config } from './libs/config';
 import { NCMBObject, NCMBInstallation, NCMBPush } from './libs/object';
+import { NCMBGeoPoint } from './libs/geopoint';
 import { NCMBQuery } from './libs/query';
 import { NCMBRequest } from './libs/request';
 import { NCMBAcl } from './libs/acl';
@@ -16,11 +17,12 @@ class NCMB {
   signatureMethod: string;
   signatureVersion: number;
   sessionToken: string;
-  User: NCMBUser;
-  Installation: NCMBInstallation;
-  Push: NCMBPush;
+  User: typeof NCMBUser;
+  Installation: typeof NCMBInstallation;
+  Push: typeof NCMBPush;
 
-  constructor(applicationKey: string, clientKey: string, config: Config = new Config()) {
+  constructor(applicationKey: string, clientKey: string, config?: Config) {
+    if (!config) config = new Config();
     this.applicationKey = applicationKey;
     this.clientKey = clientKey;
     this.version = config.version;
@@ -58,9 +60,12 @@ class NCMB {
     return new NCMBScript(this);
   }
 
+  GeoPoint(lat: number, lng: number): NCMBGeoPoint {
+    return new NCMBGeoPoint(lat, lng);
+  }
 }
 
-const init = (applicationKey: string, clientKey: string, config: Config = new Config()) => {
+var init = (applicationKey: string, clientKey: string, config: Config = new Config()) => {
   return new NCMB(applicationKey, clientKey, config);
 }
 
@@ -73,8 +78,8 @@ function _test() {
     const fields = {a: 'b', c: 'd'};
     obj.sets(fields);
     obj.save();
-    Logger.log(obj.get('objectId'));
+    console.log(obj.get('objectId'));
     obj.set('memo', new Date());
     obj.save();
-    Logger.log(obj.get('updateDate'));
+    console.log(obj.get('updateDate'));
 }

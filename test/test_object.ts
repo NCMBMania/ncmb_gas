@@ -1,6 +1,6 @@
 import { NCMB } from '../index';
 import { assert, expect } from 'chai';
-import config from './config';
+import config from './config.json';
 
 describe('Object', () => {
   it('Initialize Object', () => {

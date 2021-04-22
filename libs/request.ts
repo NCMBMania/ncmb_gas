@@ -19,6 +19,7 @@ class NCMBRequest {
       })
       url = `${url}?${queries.join('&')}`;
     }
+    console.log(url);
     const headers: {[s: string]: string} = {
       'X-NCMB-Application-Key': this.ncmb.applicationKey,
       'X-NCMB-Signature': sig,
@@ -101,8 +102,8 @@ function test() {
     const fields = {a: 'b', c: 'd'};
     obj.sets(fields);
     obj.save();
-    Logger.log(obj.get('objectId'));
+    console.log(obj.get('objectId'));
     obj.set('memo', new Date()).set('ary', ['a', 'b', 'c']).save();
-    Logger.log(obj.get('updateDate'));
+    console.log(obj.get('updateDate'));
     // obj.destroy();
 }

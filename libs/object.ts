@@ -4,7 +4,7 @@ import { NCMBQuery } from './query';
 class NCMBObject {
   ncmb: NCMB;
   className: string;
-  fields: { [s: string]: string };
+  fields: { [s: string]: any };
   
   constructor(ncmb: NCMB, className: string) {
     this.ncmb = ncmb;
@@ -22,13 +22,19 @@ class NCMBObject {
   set(key: string, value: any): NCMBObject{
     if (['createDate', 'updateDate'].indexOf(key) > -1) {
       this.fields[key] = new Date(value);
+    } else if (value && value.__type === 'Date' && value.iso) {
+      this.fields[key] = new Date(value.iso);
+    } else if (value && value.__type === 'Object' && value.className) {
+      const o = this.ncmb.Object(value.className);
+      o.sets(value);
+      this.fields[key] = o;
     } else {
       this.fields[key] = value;
     }
     return this;
   }
   
-  get(key: string): ary{
+  get(key: string): any {
     return this.fields[key];
   }
   
@@ -40,9 +46,9 @@ class NCMBObject {
     return true;
   }
   
-  saveFields(): {[s: string]: string} {
-    const results = {};
-    for (let k in this.fields) {
+  saveFields(): {[s: string]: any} {
+    const results: {[s: string]: any} = {};
+    for (const k in this.fields) {
       if (['objectId', 'createDate', 'updateDate'].indexOf(k) > -1) {
         continue;
       }
@@ -51,17 +57,28 @@ class NCMBObject {
       case 'Date':
         results[k] = {
           __type: 'Date',
-          iso: value.toISOString()
+          iso: (value as Date).toISOString()
         }
         break;
       default:
-        results[k] = value.toJSON ? value.toJSON() : value;
+        if (value) {
+          results[k] = typeof value.toJSON === 'function' ? value.toJSON() : value;
+        } else {
+          results[k] = value;
+        }
       }
     }
-    Logger.log(results);
     return results;
   }
   
+  toJSON(): object {
+    return {
+      __type: 'Pointer',
+      objectId: this.get('objectId'),
+      className: this.className
+    };
+  }
+
   destroy(): boolean {
     const req = this.ncmb.Request();
     return req.delete(this.getPath());
@@ -113,7 +130,7 @@ function _installation_test() {
   const ncmb = new NCMB(applicationKey, clientKey);
   const query = ncmb.Installation.query();
   const installations = query.fetchAll();
-  Logger.log(installations[0]);
+  console.log(installations[0]);
 
   const installation = new ncmb.Installation;
   installation
@@ -129,7 +146,7 @@ function _push_test() {
   const ncmb = new NCMB(applicationKey, clientKey);
   const query = ncmb.Push.query();
   const pushes = query.fetchAll();
-  Logger.log(pushes[0]);
+  console.log(pushes[0]);
 
   const push = new ncmb.Push();
   push
@@ -147,9 +164,11 @@ function object_test() {
     .setPublicReadAccess(true)
     .setPublicWriteAccess(false)
     .setRoleWriteAccess('admin', true);
+  const geo = ncmb.GeoPoint(35.6585805, 139.7454329);
   const item = ncmb.Object(className);
   item
     .set('acl', acl)
     .set('msg', 'Hello')
+    .set('geo', geo)
     .set('number', 5).save();
 }

@@ -1,24 +1,34 @@
 import { NCMB } from '../index';
-import { NCMBObject } from './object';
-import { NCMBInstallation } from './installation';
+import { NCMBObject, NCMBInstallation } from './object';
+import { NCMBGeoPoint } from './geopoint';
 
 class NCMBQuery {
   className: string;
   ncmb: NCMB;
   where: {[s: string]: any};
-  limit: number;
+  _limit: number;
   order: string;
-  include: string;
+  _include: string;
   skip: number;
   
   constructor(ncmb: NCMB, name: string) {
     this.ncmb = ncmb;
     this.className = name;
     this.where = {};
-    this.limit = 100;
+    this._limit = 10;
     this.order = 'createDate';
-    this.include = '';
+    this._include = '';
     this.skip = 0;
+  }
+
+  limit(num: number): NCMBQuery {
+    this._limit = num;
+    return this;
+  }
+
+  include(str: string): NCMBQuery {
+    this._include = str;
+    return this;
   }
 
   equalTo(key: string, value: any): NCMBQuery {
@@ -77,25 +87,25 @@ class NCMBQuery {
     return this.setOperand(key, value, '$nearSphere');
   }
   
-  withinKilometers(key: string, value: any, distance: number): NCMBQuery {
+  withinKilometers(key: string, value: NCMBGeoPoint, distance: number): NCMBQuery {
     this.setOperand(key, value, '$nearSphere');
     this.where[key]['$maxDistanceInKilometers'] = distance;
     return this;
   }
   
-  withinMiles(key: string, value: any, distance: number): NCMBQuery {
+  withinMiles(key: string, value: NCMBGeoPoint, distance: number): NCMBQuery {
     this.setOperand(key, value, '$nearSphere');
     this.where[key]['$maxDistanceInMiles'] = distance;
     return this;
   }
   
-  withinRadians(key: string, value: any, distance: number): NCMBQuery {
+  withinRadians(key: string, value: NCMBGeoPoint, distance: number): NCMBQuery {
     this.setOperand(key, value, '$nearSphere');
     this.where[key]['$maxDistanceInRadians'] = distance;
     return this;
   }
   
-  withinSquare(key: string, southWest: ary, northEast: ary): NCMBQuery {
+  withinSquare(key: string, southWest: NCMBGeoPoint, northEast: NCMBGeoPoint): NCMBQuery {
     return this.setOperand(key, {'$box': [southWest, northEast]}, '$within');
   }
 
@@ -112,11 +122,13 @@ class NCMBQuery {
   changeValue(value: any): any {
     if(value instanceof Date)
       return {__type: "Date", iso: value.toISOString()};
+    if (value instanceof NCMBGeoPoint)
+      return value.toJSON();
     return value;
   }
   
   fetch(): NCMBObject {
-    this.limit = 1;
+    this._limit = 1;
     return this.fetchAll()[0];
   }
   
@@ -124,12 +136,15 @@ class NCMBQuery {
     const req = this.ncmb.Request();
     const query = {
       where: this.where,
-      limit: this.limit,
+      limit: this._limit,
       order: this.order,
-      include: this.include,
+      include: this._include,
       skip: this.skip
     };
-    const json: {} = req.get(this.getPath(), query);
+    interface Results {
+      results: object[];
+    }
+    const json: Results = req.get(this.getPath(), query) as Results;
     return json.results.map(params => {
       let obj:any;
       switch (this.className) {
@@ -139,7 +154,7 @@ class NCMBQuery {
         case 'push':
           obj = new this.ncmb.Push();
           break;
-        deafult:
+        default:
           obj = this.ncmb.Object(this.className);
           break;
       }
@@ -165,7 +180,7 @@ class NCMBQuery {
 
 export { NCMBQuery };
 
-function query_test() {
+function _query_test() {
   const applicationKey = '70dfced7542e494861ec39ba7442115dfa9806312a444831ed9a7faac5087934';
   const clientKey = '4d0dea61349c1ae47106a06c80f11dfffe705e606709fa9563ac5cf80cf2edff';
 
@@ -176,5 +191,17 @@ function query_test() {
   item.set('msg', 'Hello').set('number', 5).save();
   query = ncmb.Query(className);
   const ary = query.greaterThan('number', 4).equalTo('msg', 'Hello').fetchAll();
-  Logger.log(ary.length);
+  console.log(ary.length);
+}
+
+function _query_geo_test() {
+  const applicationKey = '70dfced7542e494861ec39ba7442115dfa9806312a444831ed9a7faac5087934';
+  const clientKey = '4d0dea61349c1ae47106a06c80f11dfffe705e606709fa9563ac5cf80cf2edff';
+
+  const ncmb = new NCMB(applicationKey, clientKey);
+  const query = ncmb.Query('Test');
+  const ary = query
+    .withinKilometers('geo', ncmb.GeoPoint(35.6585805, 139.7454329), 5)
+    .fetchAll();
+  console.log(ary);
 }

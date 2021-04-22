@@ -1,6 +1,9 @@
+import { NCMB } from '../index';
 import { NCMBObject } from './object';
 
 class NCMBUser extends NCMBObject {
+  static ncmb: NCMB;
+
   constructor(ncmb) {
     super(ncmb, 'users');
   }
@@ -52,10 +55,10 @@ function _user_test() {
     const password = 'test1';
     ncmb.User.signUpByAccount(userName, password);
     const user = ncmb.User.login(userName, password);
-    Logger.log(user.get('objectId'));
-    Logger.log(ncmb.sessionToken);
+    console.log(user.get('objectId'));
+    console.log(ncmb.sessionToken);
     user.destroy();
     ncmb.User.logout();
     const anony = ncmb.User.loginAsAnonymous();
-    Logger.log(anony.get('objectId'));
+    console.log(anony.get('objectId'));
 }
